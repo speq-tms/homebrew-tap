@@ -86,8 +86,8 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           branch: chore/bump-speq-${{ steps.meta.outputs.version }}
-          commit-message: chore: bump speq to ${{ steps.meta.outputs.tag }}
-          title: chore: bump speq to ${{ steps.meta.outputs.tag }}
+          commit-message: "chore: bump speq to ${{ steps.meta.outputs.tag }}"
+          title: "chore: bump speq to ${{ steps.meta.outputs.tag }}"
           body: |
             Automated update from `speq-cli` release `${{ steps.meta.outputs.tag }}`.
 
