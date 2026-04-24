@@ -1,0 +1,19 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main, "v*"]
+
+jobs:
+  formula-checks:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout tap
+        uses: actions/checkout@v4
+
+      - name: Validate Ruby syntax
+        run: ruby -c Formula/speq.rb
+
+      - name: Run brew audit
+        run: brew audit --formula Formula/speq.rb

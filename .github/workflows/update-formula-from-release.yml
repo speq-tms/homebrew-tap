@@ -1,0 +1,98 @@
+name: update-formula-from-release
+
+on:
+  repository_dispatch:
+    types: [speq-cli-release]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag from speq-cli (example: v0.1.0-alpha.1)"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout homebrew tap
+        uses: actions/checkout@v4
+
+      - name: Resolve release metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${{ github.event.client_payload.tag }}"
+          fi
+          version="${tag#v}"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch release checksums
+        id: sha
+        shell: bash
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+          RELEASE_REPO: speq-tms/speq-cli
+        run: |
+          set -euo pipefail
+          arm="$(curl -fsSL "https://github.com/${RELEASE_REPO}/releases/download/${TAG}/speq-darwin-aarch64.tar.gz.sha256" | awk '{print $1}')"
+          amd="$(curl -fsSL "https://github.com/${RELEASE_REPO}/releases/download/${TAG}/speq-darwin-x86_64.tar.gz.sha256" | awk '{print $1}')"
+          echo "darwin_arm=${arm}" >> "$GITHUB_OUTPUT"
+          echo "darwin_amd=${amd}" >> "$GITHUB_OUTPUT"
+
+      - name: Update Formula/speq.rb
+        shell: bash
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          ARM_SHA: ${{ steps.sha.outputs.darwin_arm }}
+          AMD_SHA: ${{ steps.sha.outputs.darwin_amd }}
+        run: |
+          set -euo pipefail
+          cat > Formula/speq.rb <<EOF
+          class Speq < Formula
+            desc "Open-source CLI runtime for speq"
+            homepage "https://github.com/speq-tms/speq-cli"
+            version "${VERSION}"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "https://github.com/speq-tms/speq-cli/releases/download/${TAG}/speq-darwin-aarch64.tar.gz"
+                sha256 "${ARM_SHA}"
+              else
+                url "https://github.com/speq-tms/speq-cli/releases/download/${TAG}/speq-darwin-x86_64.tar.gz"
+                sha256 "${AMD_SHA}"
+              end
+            end
+
+            def install
+              bin.install "speq"
+            end
+
+            test do
+              assert_match "speq", shell_output("#{bin}/speq --help")
+            end
+          end
+          EOF
+
+      - name: Create pull request with formula bump
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/bump-speq-${{ steps.meta.outputs.version }}
+          commit-message: chore: bump speq to ${{ steps.meta.outputs.tag }}
+          title: chore: bump speq to ${{ steps.meta.outputs.tag }}
+          body: |
+            Automated update from `speq-cli` release `${{ steps.meta.outputs.tag }}`.
+
+            - updates `Formula/speq.rb`
+            - refreshes darwin checksums from release assets
+          labels: |
+            automation
+            homebrew
