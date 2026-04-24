@@ -15,5 +15,8 @@ jobs:
       - name: Validate Ruby syntax
         run: ruby -c Formula/speq.rb
 
+      - name: Register local tap
+        run: brew tap speq-tms/tap "$GITHUB_WORKSPACE"
+
       - name: Run brew audit
-        run: brew audit --formula Formula/speq.rb
+        run: brew audit --formula speq
