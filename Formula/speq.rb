@@ -1,15 +1,15 @@
 class Speq < Formula
   desc "Open-source CLI runtime for speq"
   homepage "https://github.com/speq-tms/speq-cli"
-  version "1.1.1"
+  version "1.1.2"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/speq-tms/speq-cli/releases/download/v1.1.1/speq-darwin-aarch64.tar.gz"
-      sha256 "d6267afaaa136ae2887e86ec1c158308b4920c8e6029c11d0e5a057c014bea1e"
+      url "https://github.com/speq-tms/speq-cli/releases/download/v1.1.2/speq-darwin-aarch64.tar.gz"
+      sha256 "2549a1c12d16378efccacfce3b20a6adc1222c66f4bc21a9f9fa0b6620fa7582"
     else
-      url "https://github.com/speq-tms/speq-cli/releases/download/v1.1.1/speq-darwin-x86_64.tar.gz"
-      sha256 "f14176458ac4bb885d9e97bc819b34c5f4038758e872e39de1fae0cba5888592"
+      url "https://github.com/speq-tms/speq-cli/releases/download/v1.1.2/speq-darwin-x86_64.tar.gz"
+      sha256 "9c275d259257020ac1d6aae95e1d995c6c608771181396b1f776daee57991b15"
     end
   end
 
